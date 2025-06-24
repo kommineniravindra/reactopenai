@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './ChatBox.css';
 import ChatMessage from './ChatMessage';
 import InputBox from './InputBox';
@@ -34,38 +34,51 @@ function ChatBox() {
     }
   };
 
-  const typeAIResponse = (text) => {
-    let index = 0;
-    const interval = setInterval(() => {
-      setTypingText((prev) => prev + text.charAt(index));
-      index++;
-      if (index === text.length) {
-        clearInterval(interval);
-        setMessages((prev) => [...prev, { text, role: 'ai' }]);
-        setTypingText('');
-        setLoading(false);
-      }
-    }, 20);
+  // ✅ FIXED: Proper typing animation with first character shown
+ const typeAIResponse = (fullText) => {
+  let i = 0;
+  let current = '';
+
+  const typeChar = () => {
+    if (i < fullText.length) {
+      current += fullText[i];
+      setTypingText(current);
+      i++;
+
+      // Scroll to bottom during typing
+      const preview = document.querySelector('.chat-preview');
+      preview?.scrollTo({ top: preview.scrollHeight, behavior: 'smooth' });
+
+      setTimeout(typeChar, 20);
+    } else {
+      setMessages((prev) => [...prev, { text: fullText, role: 'ai' }]);
+      setTypingText('');
+      setLoading(false);
+        // ✅ Final scroll after complete message
+      const preview = document.querySelector('.chat-preview');
+      preview?.scrollTo({ top: preview.scrollHeight, behavior: 'smooth' });
+    }
   };
+
+  typeChar();
+};
+
+
+
+
+  useEffect(() => {
+    const chatPreview = document.querySelector('.chat-preview');
+    chatPreview?.scrollTo(0, chatPreview.scrollHeight);
+  }, [typingText, messages]);
 
   return (
     <div className="hero-section">
-      <header className="header">
-        <div className="logo">OpenAI</div>
-        <nav>
-          <ul>
-            <li>Overview</li>
-            <li>Features</li>
-            <li>FAQs</li>
-            <li>About</li>
-          </ul>
-        </nav>
-      </header>
+    
 
       <main className="hero-content">
-        <h1>Your intelligent assistant<br />for smarter solutions.</h1>
-        <p>Free to use. Easy to try. Just ask and our AI assistant can help with writing, learning, brainstorming, and more.</p>
-
+        <h2>Your intelligent assistant<br />for smarter solutions.</h2>
+        <p>Smarter answers. Instantly delivered by your AI assistant.</p>
+       
         <div className="chat-preview">
           {messages.map((msg, idx) => (
             <ChatMessage key={idx} message={msg} />
@@ -73,7 +86,7 @@ function ChatBox() {
 
           {loading && (
             <div className="chat-message ai">
-              <img src="/AI.jpg" alt="AI" className="chat-avatar" />
+              <img src="/ai.png" alt="AI" className="chat-avatar" />
               <div className="chat-bubble">
                 {typingText}
                 <span className="blinking-cursor">|</span>
@@ -90,7 +103,7 @@ function ChatBox() {
         />
       </main>
 
-      <p className="attribution"></p>
+      <p className="attribution">Made with 💡 using React</p>
     </div>
   );
 }
